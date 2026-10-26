@@ -1,0 +1,11 @@
+{
+  "name": "acompanhamento-veiculos",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Acompanhamento de Veículos - PremieRpet (notas carregadas e veículos por transportadora e CD)",
+  "type": "module",
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "@upstash/redis": "1.34.3"
+  }
+}

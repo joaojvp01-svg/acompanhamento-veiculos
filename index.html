@@ -1,0 +1,876 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#13294B">
+<title>Acompanhamento de Veículos · PremieRpet</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2313294B'/%3E%3Cpath d='M5 10h13v10H5zM18 13h5l4 4v3h-9z' fill='%23F47920'/%3E%3Ccircle cx='10' cy='22' r='2.5' fill='%23fff'/%3E%3Ccircle cx='22' cy='22' r='2.5' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+[hidden]{display:none!important}
+html,body{margin:0}
+img{max-width:100%}
+/* Layout gerencial sóbrio: faixa azul-marinho fina no topo, barra de filtros única, KPIs neutros, painéis em duas colunas. Laranja só para Pet Supplies, ação principal e modo projeção. */
+:root{
+  --bg:#F4F5F7; --surface:#FFFFFF; --surface-2:#F0F2F5; --line:#E2E5EA; --line-2:#CDD3DC;
+  --fg:#13294B; --text:#1F2A3C; --muted:#6B7385;
+  --orange:#F47920; --orange-soft:#FDF0E6;
+  --ps:#F47920; --desc:#13294B; --g1:#7D8BA3; --g2:#A9B4C5; --g3:#CBD2DD; --g4:#DDE2E9;
+  --font:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0F1522; --surface:#161E2E; --surface-2:#1C2537; --line:#283247; --line-2:#36425B;
+  --fg:#DCE4F2; --text:#D5DCE8; --muted:#8F9AB0; --orange:#FF8A33; --orange-soft:#33231A;
+  --ps:#FF8A33; --desc:#8FA8D4; --g1:#6A7891; --g2:#4F5C74; --g3:#3D4860; --g4:#323C52; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1522; --surface:#161E2E; --surface-2:#1C2537; --line:#283247; --line-2:#36425B;
+  --fg:#DCE4F2; --text:#D5DCE8; --muted:#8F9AB0; --orange:#FF8A33; --orange-soft:#33231A;
+  --ps:#FF8A33; --desc:#8FA8D4; --g1:#6A7891; --g2:#4F5C74; --g3:#3D4860; --g4:#323C52; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.45}
+.wrap{max-width:1280px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{background:var(--surface);border-top:4px solid #13294B;border-bottom:1px solid var(--line)}
+header .wrap{padding-block:14px;display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:16px;min-width:0}
+.logo{font-weight:800;font-size:21px;color:var(--orange);letter-spacing:-.02em;padding-right:16px;border-right:1px solid var(--line);white-space:nowrap}
+.brand h1{font-size:18px;font-weight:700;margin:0;color:var(--fg);text-wrap:balance}
+.brand p{margin:0;color:var(--muted);font-size:12.5px}
+.hact{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.upd{text-align:right;font-size:11.5px;color:var(--muted);line-height:1.3}
+.upd b{display:block;color:var(--text);font-weight:600}
+.btn{border:1px solid var(--line-2);background:var(--surface);color:var(--fg);font:600 13px var(--font);padding:8px 14px;border-radius:6px;cursor:pointer;white-space:nowrap}
+.btn.pri{background:var(--orange);border-color:var(--orange);color:#fff}
+.btn.sm{padding:6px 10px;font-size:12.5px}
+.btn[aria-pressed="true"]{background:var(--orange-soft);border-color:var(--orange);color:var(--fg)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+main.wrap{padding-block:16px 48px;display:grid;gap:16px}
+.info{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:9px 14px;font-size:12.5px;color:var(--muted)}
+.info.demo{border-color:var(--orange);background:var(--orange-soft);color:var(--text)}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tabs button{border:0;background:none;font:600 14px var(--font);color:var(--muted);padding:10px 16px;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--orange)}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:flex-end;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+.toolbar .spacer{flex:1}
+.tf{display:grid;gap:4px}
+.tf>span{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.cdrow{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.seg{display:inline-flex;border:1px solid var(--line-2);border-radius:6px;overflow:hidden;background:var(--surface);flex-wrap:wrap}
+.seg button{border:0;border-right:1px solid var(--line);background:none;font:600 13px var(--font);color:var(--muted);padding:7px 12px;cursor:pointer;white-space:nowrap}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:#13294B;color:#fff}
+select.sel,input.inp{border:1px solid var(--line-2);background:var(--surface);color:var(--text);font:500 13px var(--font);padding:7px 9px;border-radius:6px;min-width:0}
+input.inp.num{text-align:right;font-variant-numeric:tabular-nums}
+.addcd{display:inline-flex;gap:6px}
+.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.kpi{background:var(--surface);padding:16px 18px}
+.kpi .t{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.kpi .v{font:700 26px var(--mono);margin:8px 0 2px;color:var(--fg);font-variant-numeric:tabular-nums}
+.kpi .v.ps{color:var(--ps)}
+.kpi .s{font-size:12px;color:var(--muted)}
+.kpi .r{font-size:11.5px;color:var(--muted);margin-top:4px}
+.kpi .r b{color:var(--text);font-weight:600}
+.simbadge{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:var(--orange);color:#fff;border-radius:4px;padding:2px 7px;margin-left:8px;vertical-align:2px}
+.row2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.55fr);gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:18px 20px;min-width:0}
+.card.sim{border-color:var(--orange);box-shadow:inset 0 3px 0 var(--orange)}
+.card h2{font-size:14px;font-weight:700;margin:0;color:var(--fg)}
+.card .sub{font-size:12.5px;color:var(--muted);margin:2px 0 14px}
+.chead{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start}
+.donut{display:grid;place-items:center;padding:6px 0}
+.donut svg{width:210px;max-width:100%;height:auto}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;font-size:12px;margin-top:10px;color:var(--text)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.legend em{font-style:normal;color:var(--muted);margin-left:3px}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+th{text-align:right;font-weight:600;color:var(--muted);padding:9px 10px;border-bottom:1px solid var(--line-2);white-space:nowrap;font-size:11.5px;letter-spacing:.03em;text-transform:uppercase}
+td{text-align:right;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+td .dot{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:8px}
+td b{color:var(--fg)}
+td.dim{color:var(--muted)}
+tr.ps td:first-child{font-weight:700}
+tr.tot td{font-weight:700;color:var(--fg);border-top:1px solid var(--line-2);border-bottom:0}
+td input.inp{width:96px}
+td input.inp.wide{width:100%;min-width:140px}
+.hb{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+.hb span{display:block;height:6px;border-radius:3px;min-width:2px}
+.models{display:grid;gap:10px}
+.model{display:grid;grid-template-columns:minmax(70px,110px) minmax(0,1fr) 48px;gap:12px;align-items:center}
+.track{position:relative;height:18px}
+.track .cap{position:absolute;top:0;bottom:0;left:0;border:1px solid var(--g2);border-radius:3px;background:var(--surface)}
+.track .stack{position:relative;top:1px;height:16px}
+.model .q .of{font:600 13px var(--mono);color:var(--muted)}
+.model .q .up{display:inline-block;margin-left:8px;font:700 11px var(--font);color:var(--muted);min-width:40px;text-align:right}
+.model .q .up.over{color:var(--orange)}
+.fred{border:1px solid var(--line);background:var(--surface-2);border-radius:8px;padding:12px 14px;margin-bottom:14px}
+.fred input.inp.num{width:110px}
+.model .nm{font-weight:600;color:var(--fg);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stack{display:flex;height:16px;border-radius:3px;overflow:hidden}
+.stack span{display:block;height:100%}
+.model .q{font:700 14px var(--mono);text-align:right;color:var(--fg)}
+.chart{overflow-x:auto}
+.chart svg{display:block;width:100%;min-width:560px;height:auto}
+.chart text{fill:var(--muted);font:11px var(--font)}
+.empty{color:var(--muted);font-size:13px;padding:10px 0}
+.shift{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.shift label{font-weight:600;color:var(--fg);font-size:13px}
+.shift input[type=range]{flex:1;min-width:160px;accent-color:var(--orange)}
+.shift output{font:700 15px var(--mono);color:var(--fg);min-width:48px;text-align:right}
+.ups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.tag{font-size:10.5px;font-weight:700;letter-spacing:.08em;padding:2px 8px;border-radius:4px;margin-left:8px;vertical-align:2px;background:var(--surface-2);color:var(--fg)}
+.flds{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end}
+.fld{display:grid;gap:4px;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.drop{display:block;border:1px dashed var(--line-2);border-radius:8px;padding:24px 16px;text-align:center;color:var(--muted);cursor:pointer;margin-top:12px;background:var(--surface-2)}
+.drop b{display:block;color:var(--fg);font-size:14px;margin-bottom:4px}
+.drop.on{border-color:var(--orange);background:var(--orange-soft)}
+.res{margin-top:12px;font-size:13px}
+.res .ok{color:var(--fg);font-weight:700}
+.res .err{color:#B03A2E;font-weight:600}
+.lnk{border:0;background:none;color:var(--muted);font:600 12px var(--font);cursor:pointer;padding:2px 6px;border-radius:4px}
+.lnk.warn{color:#B03A2E}
+.cdlist{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.cdi{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line-2);border-radius:6px;padding:4px 4px 4px 10px;font-weight:600;color:var(--fg)}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+@media (max-width:1080px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:860px){.row2,.ups{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.upd{text-align:left}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="brand">
+      <div class="logo">PremieRpet</div>
+      <div>
+        <h1>Acompanhamento de Veículos</h1>
+        <p>Notas carregadas e veículos emitidos por transportadora e CD</p>
+      </div>
+    </div>
+    <div class="hact">
+      <div class="upd">Última atualização<b id="upd">–</b></div>
+      <button class="btn pri" type="button" id="goRel" hidden>Adicionar romaneio do dia</button>
+      <button class="btn" type="button" id="loginBtn">Entrar para editar</button>
+      <form id="loginForm" class="hact" hidden autocomplete="on"><input type="text" name="username" value="editor" autocomplete="username" hidden><input class="inp" type="password" id="loginKey" name="password" placeholder="Senha de edição" autocomplete="current-password" aria-label="Senha de edição" style="width:170px"><button class="btn pri sm" type="submit">Entrar</button><button class="btn sm" type="button" id="loginX">Cancelar</button><span class="res err" id="loginErr" style="margin:0"></span></form>
+      <button class="btn sm" type="button" id="logoutBtn" hidden>Sair</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="info" id="info"></div>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" type="button" data-view="geral" aria-selected="true">Visão Geral</button>
+    <button role="tab" type="button" data-view="rel" aria-selected="false">Relatórios</button>
+  </div>
+
+  <section id="vGeral" style="display:grid;gap:16px">
+    <div class="toolbar">
+      <div class="tf"><span>CD</span>
+        <div class="cdrow"><div class="seg" id="cds" role="group" aria-label="CD"></div>
+          <button class="btn sm" type="button" id="addCdBtn" hidden>+ Novo CD</button>
+          <span class="addcd" id="addCdForm" hidden><input class="inp" id="addCdName" placeholder="Nome do CD" maxlength="40"><button class="btn sm pri" type="button" id="addCdOk">Criar</button><button class="btn sm" type="button" id="addCdX">Cancelar</button></span>
+        </div></div>
+      <div class="tf"><span>Modalidade</span>
+        <div class="seg" id="mods" role="group" aria-label="Modalidade">
+          <button type="button" data-mod="ALL" aria-pressed="true">VET + VD</button>
+          <button type="button" data-mod="VET" aria-pressed="false">VET</button>
+          <button type="button" data-mod="VD" aria-pressed="false">Venda direta</button>
+        </div></div>
+      <label class="tf"><span>Mês</span><select class="sel" id="month"></select></label>
+      <label class="tf"><span>Período</span><select class="sel" id="day"></select></label>
+      <div class="spacer"></div>
+      <button class="btn" type="button" id="simBtn" aria-pressed="false">Simular projeção</button>
+    </div>
+
+    <div class="card sim" id="simCard" hidden>
+      <div class="chead">
+        <div><h2>Projeção<span class="simbadge">simulação</span></h2>
+          <p class="sub">Edite os números para simular outro cenário. Os cards, a rosca e a tabela de transportadoras passam a mostrar a projeção. Nada é salvo para outras pessoas.</p></div>
+        <div class="acts" style="margin:0"><button class="btn sm" type="button" id="simReset">Limpar edições</button><button class="btn sm" type="button" id="simOff">Voltar aos dados reais</button></div>
+      </div>
+      <div class="shift"><label for="simShift">Passar notas e saídas da Descalvado para a Pet Supplies</label><input type="range" id="simShift" min="0" max="100" step="5" value="0"><output id="simShiftO">0%</output></div>
+      <div class="tbl" id="simTbl"></div>
+    </div>
+
+    <div class="kpis" id="kpis"></div>
+
+    <div class="row2">
+      <div class="card">
+        <h2 id="donutT">Notas carregadas por transportadora</h2>
+        <p class="sub" id="donutSub"></p>
+        <div class="donut" id="donut"></div>
+        <div class="legend" id="legend"></div>
+      </div>
+      <div class="card">
+        <h2 id="carrT">Transportadoras</h2>
+        <p class="sub" id="carrSub"></p>
+        <div class="tbl" id="tblCarr"></div>
+      </div>
+    </div>
+
+    <div class="row2">
+      <div class="card">
+        <h2>Veículos por modelo</h2>
+        <p class="sub" id="modSub"></p>
+        <div class="models" id="models"></div>
+      </div>
+      <div class="card">
+        <div class="chead"><div><h2>Modelos por transportadora</h2><p class="sub" id="tblModSub"></p></div><button class="btn sm" type="button" id="frBtn" hidden>Frota disponível</button></div>
+        <div class="fred" id="frEd" hidden>
+          <div class="flds"><label class="fld">CD<select class="sel" id="frCd"></select></label><label class="fld">Transportadora<input class="inp" id="frCar" list="dlCar" placeholder="Transportadora" maxlength="40"></label></div>
+          <div class="tbl" style="margin-top:8px"><table><thead><tr><th>Modelo</th><th>Quantidade disponível</th></tr></thead><tbody id="frRows"></tbody></table></div>
+          <div class="acts"><input class="inp" id="frNew" list="dlModel" placeholder="Outro modelo" maxlength="30"><button class="btn sm" type="button" id="frAdd">+ Modelo</button><span style="flex:1"></span><button class="btn sm" type="button" id="frX">Fechar</button><button class="btn sm pri" type="button" id="frSave">Salvar frota</button></div>
+          <div class="res" id="frRes"></div>
+        </div>
+        <div class="tbl" id="tblModel"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Notas carregadas dia a dia</h2>
+      <p class="sub">Um romaneio ou lançamento por dia, dividido por transportadora (dados reais)</p>
+      <div class="chart" id="chartDaily"></div>
+    </div>
+  </section>
+
+  <section id="vRel" hidden style="display:grid;gap:16px">
+    <div class="ups" id="upCards">
+      <div class="card">
+        <h2>Romaneio VET<span class="tag">VET</span></h2>
+        <p class="sub">Veterinários e criadores. Adicione ao final do dia.</p>
+        <div class="flds">
+          <label class="fld">CD de emissão<select class="sel" id="cVET"></select></label>
+          <label class="fld">Data, se o arquivo não trouxer<input class="inp" type="date" id="dVET"></label>
+        </div>
+        <label class="drop" id="dropVET" for="fVET"><b>Arraste o arquivo ou clique para escolher</b>Relatório de romaneio do Lincros, .csv ou .xlsx<input type="file" id="fVET" accept=".csv,.xlsx,.xls" multiple hidden></label>
+        <div class="res" id="rVET"></div>
+      </div>
+      <div class="card">
+        <h2>Romaneio Venda Direta<span class="tag">VD</span></h2>
+        <p class="sub">Venda direta (PA). Adicione ao final do dia.</p>
+        <div class="flds">
+          <label class="fld">CD de emissão<select class="sel" id="cVD"></select></label>
+          <label class="fld">Data, se o arquivo não trouxer<input class="inp" type="date" id="dVD"></label>
+        </div>
+        <label class="drop" id="dropVD" for="fVD"><b>Arraste o arquivo ou clique para escolher</b>Relatório de romaneio do Lincros, .csv ou .xlsx<input type="file" id="fVD" accept=".csv,.xlsx,.xls" multiple hidden></label>
+        <div class="res" id="rVD"></div>
+      </div>
+    </div>
+
+    <div class="card" id="manCard">
+      <h2>Lançamento manual<span class="tag">CDs sem romaneio</span></h2>
+      <p class="sub">Para CDs que não exportam o romaneio. Escolha CD, data e modalidade e informe veículos e notas por transportadora e modelo. Se já houver lançamento para a mesma combinação, ele abre aqui para edição.</p>
+      <div class="flds">
+        <label class="fld">CD<select class="sel" id="mCd"></select></label>
+        <label class="fld">Data<input class="inp" type="date" id="mDate"></label>
+        <label class="fld">Modalidade<select class="sel" id="mMod"><option value="VET">VET</option><option value="VD">Venda direta</option></select></label>
+      </div>
+      <div class="tbl" style="margin-top:12px"><table><thead><tr><th>Transportadora</th><th>Modelo</th><th>Veículos</th><th>Notas</th><th></th></tr></thead><tbody id="mRows"></tbody></table></div>
+      <div class="acts"><button class="btn sm" type="button" id="mAdd">+ Linha</button><span style="flex:1"></span><button class="btn sm" type="button" id="mDel" hidden>Excluir lançamento</button><button class="btn pri sm" type="button" id="mSave">Salvar lançamento</button></div>
+      <div class="res" id="mRes"></div>
+      <datalist id="dlCar"></datalist><datalist id="dlModel"></datalist>
+    </div>
+
+    <div class="card" id="cdCard">
+      <h2>CDs do painel</h2>
+      <p class="sub">Cada CD vira um botão no filtro da Visão Geral. Remover um CD daqui não apaga os dados já lançados.</p>
+      <div class="cdlist" id="cdList"></div>
+      <div class="flds"><input class="inp" id="cdNew" placeholder="Nome do novo CD" maxlength="40"><button class="btn sm pri" type="button" id="cdNewOk">Adicionar CD</button></div>
+    </div>
+
+    <div class="card" id="bkCard">
+      <h2>Backup</h2>
+      <p class="sub">Baixe uma cópia de todos os dados ou restaure um backup (por exemplo, o backup inicial com o histórico desde janeiro). Restaurar adiciona e substitui registros com o mesmo dia; não apaga os demais.</p>
+      <div class="acts" style="margin-top:0"><button class="btn sm" type="button" id="bkDown">Baixar backup</button><label class="btn sm pri" for="bkFile" style="display:inline-block">Restaurar backup<input type="file" id="bkFile" accept=".json,application/json" hidden></label></div>
+      <div class="res" id="bkRes"></div>
+    </div>
+
+    <div class="card">
+      <h2>Histórico</h2>
+      <p class="sub">Um registro por dia, modalidade e CD. Um novo arquivo ou lançamento da mesma combinação substitui o anterior.</p>
+      <div class="tbl" id="tblHist"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+(function(){
+"use strict";
+const MES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const MESL=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const PS='Pet Supplies',DS='Expresso Descalvado',START='2026-07-07',DEF_CD='CD Barueri';
+const S={docs:{},hist:{},man:{},cdCfg:null,frota:{},demo:false,mod:'ALL',month:null,day:'',cd:'TOTAL',view:'geral',db:null,canEdit:false,confirmDel:null,
+  sim:{on:false,shift:0,ov:{}},mLines:[]};
+let loading=true,loadErr='';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const strip=s=>String(s??'').normalize('NFD').replace(/[̀-ͯ]/g,'');
+const nk=s=>strip(s).toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+const int=x=>isFinite(x)?Math.round(x).toLocaleString('pt-BR'):'–';
+const pct=x=>isFinite(x)?(x*100).toFixed(1).replace('.',',')+'%':'–';
+const dec=x=>isFinite(x)?x.toFixed(1).replace('.',','):'–';
+const dm=d=>d.slice(8,10)+'/'+d.slice(5,7);
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
+const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
+const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const slug=s=>strip(s).toUpperCase().replace(/[^A-Z0-9]+/g,'-').replace(/^-|-$/g,'')||'CD';
+const PLATE={test:p=>/^[A-Z0-9]{7}$/.test(p)&&/[A-Z]/.test(p)&&/[0-9]/.test(p)}; // aceita placas com O/0 e I/1 trocados
+const cleanPlate=p=>String(p??'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+
+function normCarrier(n){
+  const u=strip(n).toUpperCase();
+  if(u.includes('PET SUPPLIES')||u.includes('PETSUPPLIES'))return PS;
+  if(u.includes('DESCALVADO'))return DS;
+  if(u.includes('FULL FLEX')||u.includes('FULLFLEX'))return 'Full Flex';
+  if(u.includes('FRETESAVING')||u.includes('FRETE SAVING'))return 'Fretesaving';
+  if(u.includes('ENZO')||u.includes('ALLTOP')||u.includes('ALL TOP'))return 'Alltop';
+  if(u.includes('APX'))return 'APX Transportes';
+  if(u.includes('ICE BOYS'))return 'Ice Boys';
+  if(u.includes('3ZX'))return '3ZX Transportes';
+  const t=String(n??'').trim();
+  return t?t.toLowerCase().replace(/(^|\s)\S/g,m=>m.toUpperCase()):'Não informado';
+}
+function normModel(t){
+  const raw=String(t??'');const u=strip(raw).toUpperCase();
+  if(raw.includes('¾')||/\b3\s*\/\s*4\b/.test(u))return '3/4';
+  if(u.includes('FIORINO'))return 'Fiorino';
+  if(u.includes('VUC'))return 'VUC';
+  if(u.includes('TOCO'))return 'Toco';
+  if(u.includes('TRUCK'))return 'Truck';
+  if(u.includes('CARRETA'))return 'Carreta';
+  if(u.includes('IVECO'))return 'Iveco';
+  if(/\bHR\b/.test(u)||u.includes('BONGO'))return 'HR';
+  if(u.includes('VAN')||u.includes('SPRINTER')||u.includes('DUCATO'))return 'Van';
+  const base=u.split(/[-0-9]/)[0].trim();
+  return base?base.toLowerCase().replace(/(^|\s)\S/g,m=>m.toUpperCase()):'Não informado';
+}
+const order=c=>c===PS?0:c===DS?1:9;
+const GREYS=['var(--g1)','var(--g2)','var(--g3)','var(--g4)'];
+let cmap={};
+function colorOf(c){if(c===PS)return 'var(--ps)';if(c===DS)return 'var(--desc)';if(!(c in cmap))cmap[c]=GREYS[Object.keys(cmap).length%GREYS.length];return cmap[c];}
+
+/* registro = veículo-dia (romaneio, w=1, com placa) ou linha manual (w = nº de veículos, sem placa) */
+function allVeh(){
+  const out=[];
+  const src={...S.hist,...S.docs}; // romaneio do dia prevalece sobre o histórico
+  for(const id in src){const d=src[id];
+    for(const v of d.veh||[]){const [plate,model,car,,cdcol,notas]=v;
+      if(!PLATE.test(cleanPlate(plate)))continue;
+      const cn=normCarrier(car);out.push({date:d.date,mod:d.mod,cd:d.cd||String(cdcol||'').trim()||DEF_CD,plate:cleanPlate(plate),model:normModel(model),car:cn===PS&&d.date<START?DS:cn,notas:+notas||0,w:1});}}
+  for(const id in S.man){const d=S.man[id];
+    for(const l of d.lines||[]){const [car,model,veic,notas]=l;const w=+veic||0,n=+notas||0;if(!w&&!n)continue;
+      const c=normCarrier(car);
+      out.push({date:d.date,mod:d.mod,cd:d.cd,plate:null,model:normModel(model),car:c===PS&&d.date<START?DS:c,notas:n,w});}}
+  return out;
+}
+const sumN=rs=>rs.reduce((a,r)=>a+r.notas,0);
+const sumW=rs=>rs.reduce((a,r)=>a+r.w,0);
+const uniq=rs=>new Set(rs.filter(r=>r.plate).map(r=>r.plate)).size+rs.filter(r=>!r.plate).reduce((a,r)=>a+r.w,0);
+function groupBy(rs,key){const g={};rs.forEach(r=>(g[r[key]]||(g[r[key]]={k:r[key],rs:[]})).rs.push(r));return Object.values(g);}
+function carriers(rs){return groupBy(rs,'car').map(x=>({c:x.k,rs:x.rs,n:sumN(x.rs),s:sumW(x.rs),u:uniq(x.rs)})).sort((a,b)=>order(a.c)-order(b.c)||b.n-a.n);}
+function cdNames(){
+  const fromData=[...new Set(allVeh().map(r=>r.cd))];
+  const cfg=S.cdCfg||[DEF_CD];
+  return [...cfg,...fromData.filter(c=>!cfg.includes(c)).sort()];
+}
+
+/* ---------- projeção ---------- */
+function simAggs(real){
+  const a=real.map(x=>({c:x.c,n:x.n,s:x.s,u:x.u,rn:x.n,rs:x.s,ru:x.u}));
+  const f=S.sim.shift/100;
+  if(f>0){let p=a.find(x=>x.c===PS),d=a.find(x=>x.c===DS);
+    if(d){if(!p){p={c:PS,n:0,s:0,u:0,rn:0,rs:0,ru:0};a.unshift(p);}
+      const mn=d.n*f,ms=d.s*f,mu=d.u*f;d.n-=mn;d.s-=ms;d.u-=mu;p.n+=mn;p.s+=ms;p.u+=mu;}}
+  a.forEach(x=>{const o=S.sim.ov[x.c];if(!o)return;
+    if(o.n!=null)x.n=o.n;if(o.s!=null){const k=x.s?o.s/x.s:1;x.u=x.s?x.u*k:o.s;x.s=o.s;}});
+  a.forEach(x=>{x.n=Math.max(0,Math.round(x.n));x.s=Math.max(0,Math.round(x.s));x.u=Math.max(0,Math.round(x.u));});
+  return a.sort((x,y)=>order(x.c)-order(y.c)||y.n-x.n);
+}
+
+function render(){
+  const veh=allVeh();
+  const all=veh.filter(r=>S.mod==='ALL'||r.mod===S.mod);
+  cmap={};const vol={};all.forEach(r=>vol[r.car]=(vol[r.car]||0)+r.notas);
+  Object.keys(vol).filter(c=>c!==PS&&c!==DS).sort((a,b)=>vol[b]-vol[a]).forEach(colorOf);
+  const months=[...new Set(all.map(r=>r.date.slice(0,7)))].sort().reverse();
+  if(!S.month||!months.includes(S.month))S.month=months[0]||null;
+  const cur=today().slice(0,7);
+  $('month').innerHTML=months.map(m=>`<option value="${m}" ${m===S.month?'selected':''}>${MESL[+m.slice(5,7)-1]} ${m.slice(0,4)}${m===cur?' (atual)':''}</option>`).join('')||'<option>Sem dados</option>';
+  const mr=all.filter(r=>r.date.slice(0,7)===S.month);
+  const days=[...new Set(mr.map(r=>r.date))].sort().reverse();
+  if(S.day&&!days.includes(S.day))S.day='';
+  $('day').innerHTML=`<option value="">Mês inteiro</option>`+days.map(d=>`<option value="${d}" ${d===S.day?'selected':''}>Dia ${dm(d)}</option>`).join('');
+  const cds=cdNames();
+  if(S.cd!=='TOTAL'&&!cds.includes(S.cd))S.cd='TOTAL';
+  $('cds').innerHTML=`<button type="button" data-cd="TOTAL" aria-pressed="${S.cd==='TOTAL'}">Total</button>`+cds.map(c=>`<button type="button" data-cd="${esc(c)}" aria-pressed="${S.cd===c}">${esc(c)}</button>`).join('');
+  const base=mr.filter(r=>S.cd==='TOTAL'||r.cd===S.cd);
+  const rs=base.filter(r=>!S.day||r.date===S.day);
+  const per=(S.day?'Dia '+dm(S.day):S.month?MESL[+S.month.slice(5,7)-1]+' '+S.month.slice(0,4):'')+' · '+(S.cd==='TOTAL'?'todos os CDs':S.cd)+' · '+(S.mod==='ALL'?'VET + venda direta':S.mod==='VET'?'VET':'venda direta');
+  $('donutSub').textContent=per;$('carrSub').textContent=per;
+  const empty=!Object.keys(S.docs).length&&!Object.keys(S.hist).length&&!Object.keys(S.man).length;
+  $('info').className='info'+(loadErr?' demo':'');
+  $('info').textContent=loading?'Carregando dados…':loadErr?'Não foi possível carregar os dados: '+loadErr:empty?'Nenhum dado ainda. Entre para editar e adicione o romaneio do dia na aba Relatórios ou restaure o backup.':'Dados salvos no histórico. Quem abre o link vê sempre a versão mais recente.';
+  const ats=[...Object.values(S.docs),...Object.values(S.man),...Object.values(S.hist)].map(d=>d.at).filter(Boolean).sort();
+  $('upd').textContent=S.demo?'dados de exemplo':ats.length?new Date(ats[ats.length-1]).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'–';
+  const real=carriers(rs);
+  const view=S.sim.on?simAggs(real):real.map(x=>({c:x.c,n:x.n,s:x.s,u:x.u,rn:x.n,rs:x.s,ru:x.u}));
+  const days2=new Set(rs.map(r=>r.date)).size;
+  $('simBtn').setAttribute('aria-pressed',S.sim.on);$('simCard').hidden=!S.sim.on;
+  $('donutT').innerHTML='Notas carregadas por transportadora'+(S.sim.on?'<span class="simbadge">projeção</span>':'');
+  $('carrT').innerHTML='Transportadoras'+(S.sim.on?'<span class="simbadge">projeção</span>':'');
+  renderSim(view);renderKpis(view,days2);renderCarr(view);renderModels(rs);renderDaily(base);renderHist();renderRel(cds);
+  lsSet('pt4_view',{mod:S.mod,view:S.view,cd:S.cd});
+}
+
+function renderSim(view){
+  if(!S.sim.on)return;
+  $('simShift').value=S.sim.shift;$('simShiftO').textContent=S.sim.shift+'%';
+  if(!view.length){$('simTbl').innerHTML='<p class="empty">Sem dados no filtro atual para projetar.</p>';return;}
+  let h='<table><thead><tr><th>Transportadora</th><th>Notas reais</th><th>Notas na projeção</th><th>Saídas reais</th><th>Saídas na projeção</th><th>% das notas na projeção</th></tr></thead><tbody>';
+  const tn=view.reduce((a,x)=>a+x.n,0);
+  view.forEach(x=>{h+=`<tr class="${x.c===PS?'ps':''}"><td><span class="dot" style="background:${colorOf(x.c)}"></span>${esc(x.c)}</td><td class="dim">${int(x.rn)}</td><td><input class="inp num" type="number" min="0" step="1" id="simN_${slug(x.c)}" data-car="${esc(x.c)}" data-f="n" value="${x.n}"></td><td class="dim">${int(x.rs)}</td><td><input class="inp num" type="number" min="0" step="1" id="simS_${slug(x.c)}" data-car="${esc(x.c)}" data-f="s" value="${x.s}"></td><td><b>${pct(tn?x.n/tn:NaN)}</b></td></tr>`;});
+  $('simTbl').innerHTML=h+'</tbody></table>';
+}
+
+function renderKpis(view,days){
+  const n=view.reduce((a,x)=>a+x.n,0),s=view.reduce((a,x)=>a+x.s,0),u=view.reduce((a,x)=>a+x.u,0);
+  const rn=view.reduce((a,x)=>a+x.rn,0),rsv=view.reduce((a,x)=>a+x.rs,0),ru=view.reduce((a,x)=>a+x.ru,0);
+  const p=view.find(x=>x.c===PS)||{n:0,s:0,rn:0,rs:0},d=view.find(x=>x.c===DS)||{n:0,s:0,rn:0,rs:0};
+  const sim=S.sim.on;
+  const r=(txt,changed)=>sim&&changed?`<div class="r">Real: <b>${txt}</b></div>`:'';
+  const k=(t,v,sub,real,changed,cls='')=>`<div class="kpi"><div class="t">${t}</div><div class="v ${cls}">${v}</div><div class="s">${sub}</div>${r(real,changed)}</div>`;
+  $('kpis').innerHTML=
+    k('Notas carregadas',int(n),days>1?`${int(n/days)} por dia em ${days} dias`:'no dia',int(rn),n!==rn)+
+    k('Saídas de veículos',int(s),days>1?`${dec(s/days)} veículos por dia`:'veículos no dia',int(rsv),s!==rsv)+
+    k('Veículos diferentes',int(u),'placas distintas no período',int(ru),u!==ru)+
+    k('Pet Supplies',pct(n?p.n/n:NaN),`${int(p.n)} notas · ${int(p.s)} saídas`,pct(rn?p.rn/rn:NaN),p.n!==p.rn||n!==rn,'ps')+
+    k('Expresso Descalvado',pct(n?d.n/n:NaN),`${int(d.n)} notas · ${int(d.s)} saídas`,pct(rn?d.rn/rn:NaN),d.n!==d.rn||n!==rn);
+}
+
+function renderCarr(view){
+  const n=view.reduce((a,x)=>a+x.n,0);
+  if(!view.length||!n){$('donut').innerHTML='<p class="empty">Nenhum dado neste filtro.</p>';$('legend').innerHTML='';$('tblCarr').innerHTML='';return;}
+  const R=80,C=2*Math.PI*R;let off=0;
+  let s=`<svg viewBox="0 0 220 220" role="img" aria-label="Notas por transportadora"><circle cx="110" cy="110" r="${R}" fill="none" stroke="var(--surface-2)" stroke-width="26"/>`;
+  view.forEach(x=>{const len=x.n/n*C;if(len>0)s+=`<circle cx="110" cy="110" r="${R}" fill="none" stroke="${colorOf(x.c)}" stroke-width="26" stroke-dasharray="${Math.max(len-2,0.5)} ${C}" stroke-dashoffset="${-off}" transform="rotate(-90 110 110)"><title>${esc(x.c)}: ${int(x.n)} notas (${pct(x.n/n)})</title></circle>`;off+=len;});
+  s+=`<text x="110" y="108" text-anchor="middle" style="font:700 26px var(--mono);fill:var(--fg)">${int(n)}</text><text x="110" y="130" text-anchor="middle" style="font:12px var(--font);fill:var(--muted)">notas</text></svg>`;
+  $('donut').innerHTML=s;
+  $('legend').innerHTML=view.filter(x=>x.n>0).map(x=>`<span><i style="background:${colorOf(x.c)}"></i>${esc(x.c)}<em>${pct(x.n/n)}</em></span>`).join('');
+  const max=Math.max(...view.map(x=>x.n),1);
+  let h='<table><thead><tr><th>Transportadora</th><th>Notas</th><th>% das notas</th><th>Saídas</th><th>Veículos</th><th>Notas/veículo</th></tr></thead><tbody>';
+  view.forEach(x=>{h+=`<tr class="${x.c===PS?'ps':''}"><td><span class="dot" style="background:${colorOf(x.c)}"></span>${esc(x.c)}</td><td><b>${int(x.n)}</b></td><td><div class="hb">${pct(x.n/n)}<span style="width:${Math.round(x.n/max*70)}px;background:${colorOf(x.c)}"></span></div></td><td>${int(x.s)}</td><td>${int(x.u)}</td><td>${x.s?dec(x.n/x.s):'–'}</td></tr>`;});
+  const s2=view.reduce((a,x)=>a+x.s,0),u2=view.reduce((a,x)=>a+x.u,0);
+  h+=`<tr class="tot"><td>Total</td><td>${int(n)}</td><td>100%</td><td>${int(s2)}</td><td>${int(u2)}</td><td>${s2?dec(n/s2):'–'}</td></tr></tbody></table>`;
+  $('tblCarr').innerHTML=h;
+}
+
+/* frota disponível: S.frota[cd][transportadora][modelo]; no Total soma os CDs; sem transportadora soma todas */
+function frotaOf(model,car){
+  const cds=S.cd==='TOTAL'?Object.keys(S.frota):[S.cd];let t=0,has=false;
+  cds.forEach(c=>{const byCar=S.frota[c]||{};
+    Object.keys(byCar).forEach(k=>{if(car&&k!==car)return;const v=(byCar[k]||{})[model];if(v!=null&&v!==''&&isFinite(+v)){t+=+v;has=true;}});});
+  return has?t:null;
+}
+function frotaModels(){const s=new Set();(S.cd==='TOTAL'?Object.values(S.frota):[S.frota[S.cd]||{}]).forEach(byCar=>Object.values(byCar||{}).forEach(o=>Object.keys(o||{}).forEach(k=>s.add(k))));return s;}
+function frotaCars(){const s=new Set();(S.cd==='TOTAL'?Object.values(S.frota):[S.frota[S.cd]||{}]).forEach(byCar=>Object.keys(byCar||{}).forEach(k=>{if(Object.keys(byCar[k]||{}).length)s.add(k);}));return s;}
+function renderModels(rs){
+  const days=new Set(rs.map(r=>r.date)).size||1;
+  const fu=x=>days>1?dec(x):int(x);
+  $('modSub').textContent='Saídas de veículos no período, por transportadora';
+  const g={};groupBy(rs,'model').forEach(m=>g[m.k]=m.rs);
+  frotaModels().forEach(k=>{if(!g[k])g[k]=[];});
+  const fcars=[...frotaCars()];
+  const ms=Object.keys(g).map(k=>{const w=sumW(g[k]);const withFr=fcars.filter(c=>frotaOf(k,c)!=null);
+      return {k,rs:g[k],w,used:w/days,fr:frotaOf(k),usedFr:sumW(g[k].filter(r=>withFr.includes(r.car)))/days};})
+    .filter(m=>m.w>0||m.fr).sort((a,b)=>b.used-a.used||(b.fr||0)-(a.fr||0));
+  if(!ms.length){$('models').innerHTML='<p class="empty">Nenhum veículo neste filtro.</p>';$('tblModel').innerHTML='';return;}
+  const cs=carriers(rs);
+  const anyFr=ms.some(m=>m.fr!=null);
+  $('tblModSub').textContent=anyFr?((days>1?`Saídas no período; com frota cadastrada: média por dia em ${days} dias`:'Saídas no dia; com frota cadastrada')+' / disponível e % de utilização'+(S.cd==='TOTAL'?' (frota somada dos CDs)':'')):'Saídas de veículos; cada veículo conta uma vez por dia';
+  const bars=ms.filter(m=>m.w>0),scale=Math.max(...bars.map(m=>m.w),1);
+  $('models').innerHTML=bars.map(m=>{const mc=carriers(m.rs);
+    return `<div class="model"><div class="nm" title="${esc(m.k)}">${esc(m.k)}</div><div class="track"><div class="stack" style="width:${Math.max(m.w/scale*100,2)}%">${mc.map(c=>`<span title="${esc(c.c)}: ${c.s} saídas" style="width:${c.s/(m.w||1)*100}%;background:${colorOf(c.c)}"></span>`).join('')}</div></div><div class="q">${int(m.w)}</div></div>`;}).join('')+
+    `<div class="legend" style="justify-content:flex-start">${cs.map(x=>`<span><i style="background:${colorOf(x.c)}"></i>${esc(x.c)}</span>`).join('')}</div>`;
+  // transportadoras com uso ou com frota cadastrada
+  const carSet=new Map(cs.map(c=>[c.c,c.rs]));frotaCars().forEach(c=>{if(!carSet.has(c))carSet.set(c,[]);});
+  const carRows=[...carSet.entries()].sort((a,b)=>order(a[0])-order(b[0])||sumW(b[1])-sumW(a[1]));
+  let h=`<table><thead><tr><th>Transportadora</th>`+ms.map(m=>`<th>${esc(m.k)}</th>`).join('')+'<th>Total</th></tr></thead><tbody>';
+  carRows.forEach(([car,crs])=>{
+    h+=`<tr class="${car===PS?'ps':''}"><td><span class="dot" style="background:${colorOf(car)}"></span>${esc(car)}</td>`+ms.map(m=>{
+      const q=sumW(crs.filter(r=>r.model===m.k)),fr=frotaOf(m.k,car);
+      if(fr==null)return `<td>${q||'<span style="color:var(--muted)">–</span>'}</td>`;
+      const u=q/days,over=u>fr;
+      return `<td title="${q} saídas no período">${fu(u)}<span style="color:var(--muted)"> / ${int(fr)}</span><br><span style="font-size:11px;font-weight:700;color:${over?'var(--orange)':'var(--muted)'}">${pct(fr?u/fr:NaN)}</span></td>`;}).join('')+`<td><b>${sumW(crs)}</b></td></tr>`;});
+  h+='<tr class="tot"><td>Total de saídas</td>'+ms.map(m=>`<td>${m.w}</td>`).join('')+`<td>${sumW(rs)}</td></tr>`;
+  if(anyFr){const tf=ms.reduce((a,m)=>a+(m.fr||0),0),tu=ms.filter(m=>m.fr).reduce((a,m)=>a+m.usedFr,0);
+    h+='<tr><td class="dim">Frota disponível</td>'+ms.map(m=>`<td class="dim">${m.fr!=null?int(m.fr):'–'}</td>`).join('')+`<td class="dim">${int(tf)}</td></tr>`;
+    h+=`<tr><td class="dim">Utilização ${days>1?'média':'no dia'}</td>`+ms.map(m=>`<td><b>${m.fr?pct(m.usedFr/m.fr):'–'}</b></td>`).join('')+`<td><b>${tf?pct(tu/tf):'–'}</b></td></tr>`;}
+  $('tblModel').innerHTML=h+'</tbody></table>';
+}
+function openFrota(){
+  const cds=cdNames(),sel=$('frCd');
+  sel.innerHTML=cds.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  sel.value=S.cd!=='TOTAL'&&cds.includes(S.cd)?S.cd:(cds[0]||DEF_CD);
+  if(!$('frCar').value.trim())$('frCar').value=PS;
+  loadFrota();$('frEd').hidden=false;
+}
+function frRow(m,v){return `<tr><td>${esc(m)}</td><td><input class="inp num" type="number" min="0" step="1" id="fr_${slug(m)}" data-m="${esc(m)}" value="${v??''}" aria-label="Quantidade de ${esc(m)}"></td></tr>`;}
+function loadFrota(){
+  const cd=$('frCd').value,car=normCarrier($('frCar').value),cur=((S.frota[cd]||{})[car])||{};
+  const used=allVeh().filter(r=>r.cd===cd&&r.car===car).map(r=>r.model);
+  const models=[...new Set([...used,...Object.keys(cur),'Fiorino','Van','HR','Iveco','3/4','Toco','Truck'])];
+  $('frRows').innerHTML=models.map(m=>frRow(m,cur[m])).join('');$('frRes').textContent='';
+}
+async function saveFrota(){
+  const cd=$('frCd').value,raw=$('frCar').value.trim();
+  if(!raw){$('frRes').innerHTML='<span class="err">Informe a transportadora.</span>';return;}
+  const car=normCarrier(raw),obj={};
+  document.querySelectorAll('#frRows input').forEach(i=>{if(i.value!=='')obj[i.dataset.m]=Math.max(0,Math.round(+i.value||0));});
+  const byCar={...(S.frota[cd]||{})};if(Object.keys(obj).length)byCar[car]=obj;else delete byCar[car];
+  S.frota={...S.frota,[cd]:byCar};render();
+  try{if(S.db)await S.db.doc('config/frota').set({byCdCar:S.frota});$('frRes').innerHTML=`<span class="ok">Frota salva</span> · ${esc(cd)} · ${esc(car)}`;}
+  catch(e){$('frRes').innerHTML='<span class="err">Não foi salva. Tente de novo.</span>';}
+}
+function renderModelsOld(rs){
+  if(!rs.length){$('models').innerHTML='<p class="empty">Nenhum veículo neste filtro.</p>';$('tblModel').innerHTML='';return;}
+  const ms=groupBy(rs,'model').map(m=>({k:m.k,rs:m.rs,w:sumW(m.rs)})).sort((a,b)=>b.w-a.w),max=Math.max(...ms.map(m=>m.w),1);
+  const cs=carriers(rs);
+  $('models').innerHTML=ms.map(m=>{const mc=carriers(m.rs);
+    return `<div class="model"><div class="nm" title="${esc(m.k)}">${esc(m.k)}</div><div class="track"><div class="stack" style="width:${Math.max(m.w/max*100,3)}%">${mc.map(c=>`<span title="${esc(c.c)}: ${c.s} saídas" style="width:${c.s/(m.w||1)*100}%;background:${colorOf(c.c)}"></span>`).join('')}</div></div><div class="q">${int(m.w)}</div></div>`;}).join('')+
+    `<div class="legend" style="justify-content:flex-start">${cs.map(x=>`<span><i style="background:${colorOf(x.c)}"></i>${esc(x.c)}</span>`).join('')}</div>`;
+  let h='<table><thead><tr><th>Transportadora</th>'+ms.map(m=>`<th>${esc(m.k)}</th>`).join('')+'<th>Total</th></tr></thead><tbody>';
+  cs.forEach(c=>{h+=`<tr class="${c.c===PS?'ps':''}"><td><span class="dot" style="background:${colorOf(c.c)}"></span>${esc(c.c)}</td>`+ms.map(m=>{const q=sumW(c.rs.filter(r=>r.model===m.k));return `<td>${q||'<span style="color:var(--muted)">–</span>'}</td>`;}).join('')+`<td><b>${c.s}</b></td></tr>`;});
+  h+='<tr class="tot"><td>Total</td>'+ms.map(m=>`<td>${m.w}</td>`).join('')+`<td>${sumW(rs)}</td></tr></tbody></table>`;
+  $('tblModel').innerHTML=h;
+}
+
+function renderDaily(rs){
+  const days=[...new Set(rs.map(r=>r.date))].sort();
+  if(!days.length){$('chartDaily').innerHTML='<p class="empty">Nenhum dado neste mês.</p>';return;}
+  const cs=carriers(rs).map(x=>x.c);
+  const tot={};days.forEach(d=>tot[d]=0);rs.forEach(r=>tot[r.date]+=r.notas);
+  const max=Math.max(...Object.values(tot),1);
+  const nice=v=>{const p=Math.pow(10,Math.floor(Math.log10(v)));const m=v/p;return (m<=1?1:m<=2?2:m<=5?5:10)*p;};
+  const top=nice(max*1.05),step=top/4;
+  const W=Math.max(640,days.length*34+60),H=240,L=46,R=10,T=14,B=26,ih=H-T-B,bw=(W-L-R)/Math.max(days.length,1);
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Notas carregadas por dia">`;
+  for(let v=0;v<=top+1e-9;v+=step){const y=T+ih*(1-v/top);s+=`<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="var(--line)"/><text x="${L-6}" y="${y+4}" text-anchor="end">${int(v)}</text>`;}
+  const bwid=Math.min(bw*.62,46);
+  days.forEach((d,i)=>{let acc=0;const x=L+i*bw+(bw-bwid)/2;
+    cs.forEach(c=>{const v=rs.filter(r=>r.date===d&&r.car===c).reduce((a,r)=>a+r.notas,0);if(!v)return;const h=ih*v/top,y=T+ih-acc-h;
+      s+=`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bwid.toFixed(1)}" height="${h.toFixed(1)}" fill="${colorOf(c)}" ${S.day&&d!==S.day?'opacity=".3"':''}><title>${dm(d)} · ${esc(c)}: ${int(v)} notas</title></rect>`;acc+=h;});
+    if(days.length<=18||i%2===0)s+=`<text x="${(x+bwid/2).toFixed(1)}" y="${H-8}" text-anchor="middle">${dm(d)}</text>`;});
+  $('chartDaily').innerHTML=s+'</svg><div class="legend" style="justify-content:flex-start">'+cs.map(c=>`<span><i style="background:${colorOf(c)}"></i>${esc(c)}</span>`).join('')+'</div>';
+}
+
+/* ---------- relatórios ---------- */
+function renderRel(cds){
+  const opts=cds.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  ['cVET','cVD','mCd'].forEach(id=>{const el=$(id),v=el.value;el.innerHTML=opts;if(v&&cds.includes(v))el.value=v;else if(id==='mCd'){const alt=cds.find(c=>c!==DEF_CD);el.value=alt||cds[0]||'';}});
+  $('cdList').innerHTML=(S.cdCfg||[DEF_CD]).map(c=>`<span class="cdi">${esc(c)}${S.canEdit?`<button type="button" class="lnk ${S.confirmDel==='cd:'+c?'warn':''}" data-rmcd="${esc(c)}">${S.confirmDel==='cd:'+c?'Confirmar':'Remover'}</button>`:''}</span>`).join('');
+  const veh=allVeh();
+  $('dlCar').innerHTML=[...new Set([PS,DS,...veh.map(r=>r.car)])].map(c=>`<option value="${esc(c)}">`).join('');
+  $('dlModel').innerHTML=[...new Set(['Fiorino','Van','HR','Iveco','3/4','Toco','Truck',...veh.map(r=>r.model)])].map(c=>`<option value="${esc(c)}">`).join('');
+}
+function renderHist(){
+  const items=[];
+  const HIST='(histórico)';const hd=Object.values(S.hist).filter(d=>!S.docs[d.date+'_'+d.mod]);
+  if(hd.length){const ds=hd.map(d=>d.date).sort(),vv=hd.flatMap(d=>(d.veh||[]).filter(v=>PLATE.test(cleanPlate(v[0]))));
+    items.push({key:'h',hist:true,date:ds[ds.length-1],dateTxt:dm(ds[0])+'/'+ds[0].slice(0,4)+' a '+dm(ds[ds.length-1])+'/'+ds[ds.length-1].slice(0,4),mod:'VET + VD',cd:DEF_CD,n:vv.reduce((a,v)=>a+(+v[5]||0),0),w:vv.length,src:'Ocupação de Veículos.xlsx · '+new Set(ds).size+' dias',at:hd[0].at});}
+  if(!S.demo)for(const id in S.docs){const d=S.docs[id];if(String(d.file||'').includes(HIST))continue;const vv=(d.veh||[]).filter(v=>PLATE.test(cleanPlate(v[0])));items.push({key:'r:'+id,date:d.date,mod:d.mod,cd:d.cd||DEF_CD,n:vv.reduce((a,v)=>a+(+v[5]||0),0),w:vv.length,src:d.file||'Romaneio',at:d.at});}
+  for(const id in S.man){const d=S.man[id],ls=d.lines||[];items.push({key:'m:'+id,date:d.date,mod:d.mod,cd:d.cd,n:ls.reduce((a,l)=>a+(+l[3]||0),0),w:ls.reduce((a,l)=>a+(+l[2]||0),0),src:'Lançamento manual',at:d.at});}
+  if(!items.length){$('tblHist').innerHTML='<p class="empty">Nada salvo ainda. Use as caixas acima para adicionar o primeiro romaneio.</p>';return;}
+  items.sort((a,b)=>b.date.localeCompare(a.date)||a.cd.localeCompare(b.cd)||a.mod.localeCompare(b.mod));
+  let h='<table><thead><tr><th>Dia</th><th>Modalidade</th><th>CD</th><th>Notas</th><th>Saídas</th><th>Origem</th><th>Adicionado em</th>'+(S.canEdit?'<th></th>':'')+'</tr></thead><tbody>';
+  items.forEach(it=>{h+=`<tr><td>${it.dateTxt||dm(it.date)+'/'+it.date.slice(0,4)}</td><td>${it.mod}</td><td>${esc(it.cd)}</td><td><b>${int(it.n)}</b></td><td>${int(it.w)}</td><td class="dim">${esc(it.src)}</td><td class="dim">${it.at?new Date(it.at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):''}</td>`+
+    (S.canEdit?it.hist?'<td></td>':`<td>${it.key.startsWith('m:')?`<button type="button" class="lnk" data-edit="${esc(it.key.slice(2))}">Editar</button>`:''}<button type="button" class="lnk ${S.confirmDel===it.key?'warn':''}" data-del="${esc(it.key)}">${S.confirmDel===it.key?'Confirmar remoção':'Remover'}</button></td>`:'')+'</tr>';});
+  $('tblHist').innerHTML=h+'</tbody></table>';
+}
+
+/* CDs */
+async function saveCds(list){
+  S.cdCfg=list;render();
+  if(S.db){try{await S.db.doc('config/cds').set({list});}catch(e){}}
+}
+function addCd(name){
+  name=String(name||'').trim().replace(/\s+/g,' ');if(!name)return false;
+  if(!/^cd\b/i.test(name))name='CD '+name;
+  const list=[...(S.cdCfg||[DEF_CD])];
+  if(list.some(c=>c.toLowerCase()===name.toLowerCase()))return name;
+  list.push(name);saveCds(list);return name;
+}
+
+/* lançamento manual */
+const manId=(date,mod,cd)=>date+'_'+mod+'_'+slug(cd);
+function loadManual(){
+  const id=manId($('mDate').value,$('mMod').value,$('mCd').value),d=S.man[id];
+  S.mLines=d?d.lines.map(l=>[...l]):[[PS,'Fiorino','',''],[DS,'Fiorino','','']];
+  $('mDel').hidden=!d;$('mRes').textContent=d?'Lançamento existente aberto para edição.':'';
+  drawManual();
+}
+function drawManual(){
+  $('mRows').innerHTML=S.mLines.map((l,i)=>`<tr><td><input class="inp wide" id="mc${i}" list="dlCar" value="${esc(l[0])}" data-i="${i}" data-k="0"></td><td><input class="inp wide" id="mm${i}" list="dlModel" value="${esc(l[1])}" data-i="${i}" data-k="1"></td><td><input class="inp num" type="number" min="0" id="mv${i}" value="${esc(l[2])}" data-i="${i}" data-k="2"></td><td><input class="inp num" type="number" min="0" id="mn${i}" value="${esc(l[3])}" data-i="${i}" data-k="3"></td><td><button type="button" class="lnk" data-rm="${i}" aria-label="Remover linha">Remover</button></td></tr>`).join('');
+}
+async function saveManual(){
+  if(!S.canEdit){$('mRes').innerHTML='<span class="err">Só quem edita o painel pode lançar dados.</span>';return;}
+  const date=$('mDate').value,mod=$('mMod').value,cd=$('mCd').value;
+  if(!date||!cd){$('mRes').innerHTML='<span class="err">Escolha o CD e a data.</span>';return;}
+  const lines=S.mLines.map(l=>[String(l[0]).trim(),String(l[1]).trim(),+l[2]||0,+l[3]||0]).filter(l=>l[0]&&(l[2]||l[3]));
+  if(!lines.length){$('mRes').innerHTML='<span class="err">Preencha ao menos uma linha com transportadora e veículos ou notas.</span>';return;}
+  const id=manId(date,mod,cd),doc={date,mod,cd,lines,at:new Date().toISOString()};
+  try{if(S.db)await S.db.collection('manuais').doc(id).set(doc);S.man[id]=doc;
+    $('mRes').innerHTML=`<span class="ok">Lançamento salvo</span> · ${esc(cd)} · ${dm(date)} · ${mod} · ${int(lines.reduce((a,l)=>a+l[3],0))} notas em ${int(lines.reduce((a,l)=>a+l[2],0))} veículos`;$('mDel').hidden=false;render();}
+  catch(e){$('mRes').innerHTML='<span class="err">Não foi salvo. Tente de novo.</span>';}
+}
+
+/* ---------- leitura do romaneio ---------- */
+function num(v){if(typeof v==='number')return v;if(v==null)return 0;let s=String(v).replace(/[^\d,.\-]/g,'');if(s.includes(','))s=s.replace(/\./g,'').replace(',','.');const n=parseFloat(s);return isFinite(n)?n:0;}
+function ymd(v){
+  if(v instanceof Date&&!isNaN(v))return v.getFullYear()+'-'+String(v.getMonth()+1).padStart(2,'0')+'-'+String(v.getDate()).padStart(2,'0');
+  if(typeof v==='number'&&v>20000)return new Date(Math.round((v-25569)*864e5)).toISOString().slice(0,10);
+  const s=String(v??'').trim();let m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+  if(m){const y=m[3].length===2?'20'+m[3]:m[3];return y+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');}
+  m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);return m?m[0]:null;
+}
+function parseCSV(text){
+  const first=text.split('\n')[0];const sep=(first.match(/;/g)||[]).length>=(first.match(/,/g)||[]).length?';':',';
+  const out=[];let row=[],cur='',q=false;
+  for(let i=0;i<text.length;i++){const ch=text[i];
+    if(q){if(ch==='"'){if(text[i+1]==='"'){cur+='"';i++}else q=false}else cur+=ch;}
+    else if(ch==='"')q=true;else if(ch===sep){row.push(cur);cur=''}
+    else if(ch==='\n'){row.push(cur);out.push(row);row=[];cur=''}else if(ch!=='\r')cur+=ch;}
+  if(cur||row.length){row.push(cur);out.push(row);}
+  return out;
+}
+const COLS={
+  date:['data roteiro','data romaneio','data saida','data emissao','data'],
+  sess:['sessao nome','sessao'],
+  plate:['veiculo','placa','placa veiculo'],
+  model:['tipo veiculo','modelo veiculo','modelo'],
+  car:['transportadora','transportador 1','transportador'],
+  cd:['cd','filial','centro de distribuicao'],
+  nf:['nota fiscal','numero nf','numero nota','nr nf','n nf','nf','nfe'],
+  qnf:['quantidade notas','qtd notas','qtde notas','quantidade nf','qtd nf','notas','quantidade entregas','qtd entregas','entregas'],
+  peso:['peso utilizado','peso total','peso'],
+  mod:['modalidade']
+};
+function mapHeader(h){
+  const keys=h.map(nk),idx={};
+  for(const f in COLS){let i=-1;for(const c of COLS[f]){i=keys.indexOf(c);if(i>=0)break;}
+    if(i<0&&!['nf','cd','plate'].includes(f))for(const c of COLS[f]){i=keys.findIndex(k=>k.startsWith(c));if(i>=0)break;}
+    idx[f]=i;}
+  return idx;
+}
+const isVehHeader=r=>r&&r.some(c=>{const k=nk(c);return k==='veiculo'||k.startsWith('placa');})&&r.some(c=>nk(c).startsWith('transportad'));
+/* O romaneio do Lincros traz a seção de veículos e depois outras (clientes etc.): lê só a de veículos */
+function matrixToDocs(mat,mod,fallbackDate,cd,fname,acc){
+  const starts=[];mat.forEach((r,i)=>{if(isVehHeader(r))starts.push(i);});
+  if(!starts.length)throw new Error('não encontrei a seção de veículos (colunas Veículo/Placa e Transportadora)');
+  let skipped=0;const tmp={};
+  for(const hi of starts){
+    const idx=mapHeader(mat[hi]);
+    for(let i=hi+1;i<mat.length;i++){const r=mat[i];
+      if(!r||!r.some(c=>String(c).trim()))continue;
+      const g=f=>idx[f]>=0?r[idx[f]]:'';
+      const plate=cleanPlate(g('plate'));
+      if(!PLATE.test(plate)){if(r.filter(c=>String(c).trim()).length>=3&&!/\d/.test(String(r[idx.plate]??'')))break;continue;}
+      const carRaw=String(g('car')??'');
+      if(strip(carRaw).toUpperCase().includes('FICTICIA')){skipped++;continue;}
+      let m=mod;const mv=strip(g('mod')).toUpperCase().trim();
+      if(mv)m=mv.startsWith('VET')?'VET':(mv==='PA'||mv==='VD'||mv.includes('VENDA'))?'VD':mod;
+      if(m!==mod)continue;
+      const date=ymd(g('date'))||fallbackDate;if(!date)throw new Error('o arquivo não traz a data; preencha o campo Data');
+      const key=date+'|'+plate;
+      const v=tmp[key]||(tmp[key]={date,plate,model:String(g('model')??''),car:normCarrier(carRaw),sess:String(g('sess')??''),nfs:new Set(),q:0,peso:0});
+      if(idx.nf>=0){const nf=String(g('nf')??'').trim();if(nf)v.nfs.add(nf);}
+      else v.q+=idx.qnf>=0?num(g('qnf')):1;
+      v.peso+=num(g('peso'));
+    }
+  }
+  Object.values(tmp).forEach(v=>{const id=v.date+'_'+mod+(cd===DEF_CD?'':'_'+slug(cd));
+    const d=acc[id]||(acc[id]={date:v.date,mod,cd,file:fname,veh:[]});
+    d.veh.push([v.plate,v.model,v.car,v.sess,'',v.nfs.size||v.q,Math.round(v.peso)]);});
+  return {skipped};
+}
+async function readFile(f){
+  if(/\.csv$/i.test(f.name)){const buf=await f.arrayBuffer();let t=new TextDecoder('utf-8').decode(buf);
+    if(t.includes(String.fromCharCode(0xFFFD)))t=new TextDecoder('windows-1252').decode(buf);return parseCSV(t);}
+  if(!window.XLSX)throw new Error('o leitor de Excel não carregou; salve o arquivo como CSV');
+  const wb=XLSX.read(await f.arrayBuffer(),{type:'array',cellDates:true});
+  const name=wb.SheetNames.find(n=>nk(n).includes('romaneio'))||wb.SheetNames[0];
+  return XLSX.utils.sheet_to_json(wb.Sheets[name],{header:1,raw:true,defval:''});
+}
+async function handleUpload(mod,files){
+  const out=$('r'+mod);if(!files.length)return;
+  if(!S.canEdit){out.innerHTML='<span class="err">Só quem edita o painel pode adicionar romaneios.</span>';return;}
+  const cd=$('c'+mod).value||DEF_CD;
+  out.textContent='Lendo…';
+  const acc={},errs=[];let skipped=0;
+  for(const f of files){try{skipped+=matrixToDocs(await readFile(f),mod,$('d'+mod).value,cd,f.name,acc).skipped;}catch(e){errs.push(f.name+': '+e.message);}}
+  const ids=Object.keys(acc).sort();
+  if(!ids.length){out.innerHTML=`<span class="err">${esc(errs.join(' · ')||'Nenhum veículo de '+(mod==='VET'?'VET':'venda direta')+' encontrado no arquivo.')}</span>`;return;}
+  if(S.demo){S.docs={};S.demo=false;}
+  let ok=0;const now=new Date().toISOString();
+  for(const id of ids){const doc={...acc[id],at:now};
+    if(!S.db){S.docs[id]=doc;ok++;continue;}
+    let t=0;while(true){try{await S.db.collection('romaneios').doc(id).set(doc);S.docs[id]=doc;ok++;break;}
+      catch(e){t++;if((e.code==='resource_exhausted'||e.code==='unavailable')&&t<4){await new Promise(r=>setTimeout(r,700*t+Math.random()*300));continue;}
+        errs.push(dm(acc[id].date)+': não foi salvo ('+(e.code==='quota_exceeded'?'banco cheio':'tente de novo')+')');break;}}
+  }
+  const notas=ids.reduce((a,i)=>a+acc[i].veh.reduce((b,v)=>b+v[5],0),0),veh=ids.reduce((a,i)=>a+acc[i].veh.length,0);
+  const ds=[...new Set(ids.map(i=>acc[i].date))].sort();
+  out.innerHTML=`<span class="ok">Romaneio salvo</span> · ${ds.map(dm).join(', ')} · ${esc(cd)} · ${int(notas)} notas em ${veh} veículos${skipped?` · ${skipped} placa(s) fictícia(s) ignoradas`:''}${!S.db?' · <span class="err">sem banco: vale só nesta visualização</span>':''}${errs.length?`<br><span class="err">${esc(errs.join(' · '))}</span>`:''}`;
+  render();
+}
+async function delItem(key){
+  if(S.confirmDel!==key){S.confirmDel=key;render();return;}
+  S.confirmDel=null;
+  const manual=key.startsWith('m:'),id=key.slice(2);
+  try{if(S.db)await S.db.collection(manual?'manuais':'romaneios').doc(id).delete();if(manual)delete S.man[id];else delete S.docs[id];}catch(e){}
+  render();
+}
+
+/* ---------- eventos ---------- */
+function setView(v){S.view=v;document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.view===v));$('vGeral').hidden=v!=='geral';$('vRel').hidden=v!=='rel';lsSet('pt4_view',{mod:S.mod,view:v,cd:S.cd});}
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
+$('goRel').addEventListener('click',()=>setView('rel'));
+const resetOv=()=>{S.sim.ov={};};
+$('mods').addEventListener('click',e=>{const b=e.target.closest('[data-mod]');if(!b)return;S.mod=b.dataset.mod;resetOv();document.querySelectorAll('#mods button').forEach(x=>x.setAttribute('aria-pressed',x===b));render();});
+$('cds').addEventListener('click',e=>{const b=e.target.closest('[data-cd]');if(!b)return;S.cd=b.dataset.cd;resetOv();render();});
+$('month').addEventListener('change',e=>{S.month=e.target.value;S.day='';resetOv();render();});
+$('day').addEventListener('change',e=>{S.day=e.target.value;resetOv();render();});
+// novo CD pela barra
+$('addCdBtn').addEventListener('click',()=>{$('addCdBtn').hidden=true;$('addCdForm').hidden=false;$('addCdName').focus();});
+const closeAdd=()=>{$('addCdForm').hidden=true;$('addCdBtn').hidden=!S.canEdit;$('addCdName').value='';};
+$('addCdX').addEventListener('click',closeAdd);
+$('addCdOk').addEventListener('click',()=>{const n=addCd($('addCdName').value);if(n){S.cd=n;closeAdd();render();}});
+$('addCdName').addEventListener('keydown',e=>{if(e.key==='Enter')$('addCdOk').click();if(e.key==='Escape')closeAdd();});
+$('cdNewOk').addEventListener('click',()=>{if(addCd($('cdNew').value))$('cdNew').value='';});
+$('cdNew').addEventListener('keydown',e=>{if(e.key==='Enter')$('cdNewOk').click();});
+$('cdList').addEventListener('click',e=>{const b=e.target.closest('[data-rmcd]');if(!b)return;const c=b.dataset.rmcd;
+  if(S.confirmDel!=='cd:'+c){S.confirmDel='cd:'+c;render();return;}S.confirmDel=null;saveCds((S.cdCfg||[DEF_CD]).filter(x=>x!==c));});
+// projeção
+$('simBtn').addEventListener('click',()=>{S.sim.on=!S.sim.on;render();});
+$('simOff').addEventListener('click',()=>{S.sim={on:false,shift:0,ov:{}};render();});
+$('simReset').addEventListener('click',()=>{S.sim.shift=0;S.sim.ov={};render();});
+$('simShift').addEventListener('input',e=>{S.sim.shift=+e.target.value;S.sim.ov={};render();});
+$('simTbl').addEventListener('change',e=>{const i=e.target.closest('input[data-car]');if(!i)return;const c=i.dataset.car;
+  (S.sim.ov[c]||(S.sim.ov[c]={}))[i.dataset.f]=Math.max(0,+i.value||0);render();});
+// frota
+$('frBtn').addEventListener('click',()=>{if($('frEd').hidden)openFrota();else $('frEd').hidden=true;});
+$('frX').addEventListener('click',()=>{$('frEd').hidden=true;});
+$('frCd').addEventListener('change',loadFrota);
+$('frCar').addEventListener('change',loadFrota);
+$('frSave').addEventListener('click',saveFrota);
+$('frAdd').addEventListener('click',()=>{const m=normModel($('frNew').value);if(!$('frNew').value.trim())return;
+  if(![...document.querySelectorAll('#frRows input')].some(i=>i.dataset.m===m))$('frRows').insertAdjacentHTML('beforeend',frRow(m,''));$('frNew').value='';});
+// histórico
+$('tblHist').addEventListener('click',e=>{const d=e.target.closest('[data-del]');if(d){delItem(d.dataset.del);return;}
+  const ed=e.target.closest('[data-edit]');if(ed){const m=S.man[ed.dataset.edit];if(!m)return;$('mCd').value=m.cd;$('mDate').value=m.date;$('mMod').value=m.mod;loadManual();$('manCard').scrollIntoView({behavior:'smooth',block:'start'});}});
+// manual
+['mCd','mDate','mMod'].forEach(id=>$(id).addEventListener('change',loadManual));
+$('mRows').addEventListener('input',e=>{const t=e.target;if(t.dataset.i==null)return;S.mLines[+t.dataset.i][+t.dataset.k]=t.value;});
+$('mRows').addEventListener('click',e=>{const b=e.target.closest('[data-rm]');if(!b)return;S.mLines.splice(+b.dataset.rm,1);if(!S.mLines.length)S.mLines.push(['','','','']);drawManual();});
+$('mAdd').addEventListener('click',()=>{S.mLines.push(['','','','']);drawManual();});
+$('mSave').addEventListener('click',saveManual);
+$('mDel').addEventListener('click',()=>{const id=manId($('mDate').value,$('mMod').value,$('mCd').value);if(S.man[id]){delItem('m:'+id).then(()=>{if(S.confirmDel===null)loadManual();});$('mRes').textContent=S.confirmDel==='m:'+id?'Clique em Confirmar remoção no histórico, ou em Excluir de novo.':'';}});
+['VET','VD'].forEach(m=>{
+  $('d'+m).value=today();
+  $('f'+m).addEventListener('change',e=>{handleUpload(m,[...e.target.files]);e.target.value='';});
+  const dz=$('drop'+m);
+  ['dragenter','dragover'].forEach(t=>dz.addEventListener(t,e=>{e.preventDefault();dz.classList.add('on');}));
+  ['dragleave','drop'].forEach(t=>dz.addEventListener(t,e=>{e.preventDefault();dz.classList.remove('on');}));
+  dz.addEventListener('drop',e=>handleUpload(m,[...e.dataTransfer.files]));
+});
+
+/* ---------- início ---------- */
+function applyEditUI(){
+  $('goRel').hidden=!S.canEdit;$('addCdBtn').hidden=!S.canEdit;$('frBtn').hidden=!S.canEdit;if(!S.canEdit)$('frEd').hidden=true;
+  ['upCards','manCard','bkCard'].forEach(id=>$(id).hidden=!S.canEdit);
+  document.querySelector('#cdCard .flds').hidden=!S.canEdit;
+}
+const v=lsGet('pt4_view');
+if(v){S.mod=v.mod||'ALL';S.cd=v.cd||'TOTAL';document.querySelectorAll('#mods button').forEach(x=>x.setAttribute('aria-pressed',x.dataset.mod===S.mod));if(v.view)setView(v.view);}
+$('mDate').value=today();
+render();loadManual();applyEditUI();
+
+/* ---------- API (Vercel + Upstash) ---------- */
+const API={key:lsGet('av_key')||'',
+  async post(url,body){
+    let r;try{r=await fetch(url,{method:'POST',headers:{'content-type':'application/json','x-admin-key':API.key},body:JSON.stringify(body)});}
+    catch(e){const err=new Error('Sem conexão');err.code='unavailable';throw err;}
+    if(!r.ok){let m='';try{m=(await r.json()).error||''}catch(e){}
+      const err=new Error(m||'Erro '+r.status);err.code=r.status===401?'not_granted':r.status===413?'quota_exceeded':r.status>=500?'unavailable':'invalid_argument';
+      if(r.status===401)logout('Sua sessão de edição expirou. Entre de novo.');throw err;}
+    return r.json();}};
+S.db={doc(p){const [c,id]=p.split('/');return S.db.collection(c).doc(id);},
+  collection(c){return {doc(id){return {set:d=>API.post('/api/data',{op:'set',coll:c,id,data:d}),delete:()=>API.post('/api/data',{op:'del',coll:c,id})};}};}};
+function applyData(x){
+  S.docs=x.romaneios||{};S.man=x.manuais||{};
+  const h={};for(const id in (x.historico||{})){const d=x.historico[id];if(!d||!d.mod||!d.days)continue;
+    for(const date in d.days){if(Array.isArray(d.days[date]))h[date+'_'+d.mod]={date,mod:d.mod,cd:d.cd||DEF_CD,file:d.file||'Histórico',veh:d.days[date],at:d.at};}}
+  S.hist=h;
+  const cfg=x.config||{};
+  if(cfg.cds&&Array.isArray(cfg.cds.list))S.cdCfg=cfg.cds.list;
+  if(cfg.frota&&cfg.frota.byCdCar)S.frota=cfg.frota.byCdCar;
+}
+async function load(){
+  try{const r=await fetch('/api/data',{cache:'no-store'});
+    if(!r.ok){let m='';try{m=(await r.json()).error||''}catch(e){}throw new Error(m||'erro '+r.status);}
+    applyData(await r.json());loadErr='';}
+  catch(e){loadErr=e.message||'sem conexão';}
+  loading=false;render();
+}
+// atualiza a cada 2 minutos, sem atrapalhar quem está editando
+setInterval(()=>{if(document.hidden||S.sim.on)return;const a=document.activeElement;if(a&&/INPUT|SELECT|TEXTAREA/.test(a.tagName))return;load();},120000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!loading)load();});
+
+/* login de edição */
+function setEdit(on){S.canEdit=on;applyEditUI();$('loginBtn').hidden=on;$('logoutBtn').hidden=!on;$('loginForm').hidden=true;render();}
+function logout(msg){API.key='';lsSet('av_key',null);setEdit(false);if(msg){$('loginBtn').hidden=true;$('loginForm').hidden=false;$('loginErr').textContent=msg;}}
+async function checkKey(k){try{const r=await fetch('/api/auth',{method:'POST',headers:{'x-admin-key':k}});
+  if(r.ok)return true;let m='';try{m=(await r.json()).error||''}catch(e){}return m||'Senha inválida.';}catch(e){return 'Sem conexão.';}}
+$('loginBtn').addEventListener('click',()=>{$('loginBtn').hidden=true;$('loginForm').hidden=false;$('loginErr').textContent='';$('loginKey').focus();});
+$('loginX').addEventListener('click',()=>{$('loginForm').hidden=true;$('loginBtn').hidden=false;});
+$('loginForm').addEventListener('submit',async e=>{e.preventDefault();const k=$('loginKey').value;if(!k)return;
+  $('loginErr').textContent='Verificando…';const ok=await checkKey(k);
+  if(ok===true){API.key=k;lsSet('av_key',k);$('loginKey').value='';setEdit(true);}else $('loginErr').textContent=ok;});
+$('logoutBtn').addEventListener('click',()=>{logout();setView('geral');});
+
+/* backup */
+$('bkDown').addEventListener('click',async()=>{
+  $('bkRes').textContent='Gerando…';
+  try{const r=await fetch('/api/data',{cache:'no-store'});if(!r.ok)throw 0;const blob=new Blob([JSON.stringify(await r.json())],{type:'application/json'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='backup-acompanhamento-veiculos-'+today()+'.json';document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);$('bkRes').innerHTML='<span class="ok">Backup baixado</span>';}
+  catch(e){$('bkRes').innerHTML='<span class="err">Não foi possível gerar o backup.</span>';}
+});
+$('bkFile').addEventListener('change',async e=>{
+  const f=e.target.files[0];e.target.value='';if(!f)return;
+  let x;try{x=JSON.parse(await f.text());}catch(err){$('bkRes').innerHTML='<span class="err">Arquivo de backup inválido.</span>';return;}
+  const parts=['historico','romaneios','manuais','config'].filter(c=>x[c]&&typeof x[c]==='object'&&Object.keys(x[c]).length);
+  if(!parts.length){$('bkRes').innerHTML='<span class="err">O arquivo não tem dados do painel.</span>';return;}
+  const done=[];
+  for(const c of parts){$('bkRes').textContent='Restaurando '+c+'…';
+    try{const r=await API.post('/api/restore',{coll:c,docs:x[c]});done.push(c+': '+r.count);}
+    catch(err){$('bkRes').innerHTML=`<span class="err">Falhou em ${esc(c)}: ${esc(err.message)}</span>`;await load();return;}}
+  $('bkRes').innerHTML='<span class="ok">Backup restaurado</span> · '+esc(done.join(' · '));
+  await load();
+});
+
+/* início */
+(async()=>{
+  if(API.key){const ok=await checkKey(API.key);if(ok===true)setEdit(true);else{API.key='';lsSet('av_key',null);}}
+  await load();
+})();
+})();
+</script>
+</body>
+</html>
